@@ -16,27 +16,28 @@ def create_output_spreadsheet(input_file, output_file):
     for week in unique_weeks:
         output_wb.create_sheet(title="Week {}".format(week))
 
-    # Step 4: Write the data to each sheet (excluding "Week", "Plan", and "SS" columns)
     for week in unique_weeks:
+        #makes it focus on one for a specific week
+        week_data = df[df["Week"] == week]
+
+        # Repeat lines per sets for the current week_data
+        sets = repeat_lines_per_sets(week_data)
+
+        # Get the corresponding sheet for the current week
         week_sheet = output_wb["Week {}".format(week)]
-        week_data = df[df["Week"] == week].drop(columns=["Week", "Plan", "SS?"])
-        for row in pd.DataFrame(week_data).itertuples(index=False, name=None):
+
+        # Write each row from 'sets' DataFrame to the sheet
+        for _, row in sets.iterrows():
             week_sheet.append(row)
 
     # Step 5: Save the output Excel file
     output_wb.save(output_file)
 
-def repeat_lines_per_sets(week_data, sets):
+def repeat_lines_per_sets(week_data):
+    repeated_data = pd.DataFrame()
+    for _, row in week_data.iterrows():
+        repeated_data = pd.concat([repeated_data] + [row] * parse_plan_for_sets(row["Plan"]), ignore_index=True)
+    return repeated_data
     
-
-
 # Example usage:
-#create_output_spreadsheet("Creator.xlsx", "Output.xlsx")
-
-# Read the data from the original Excel file
-df = pd.read_excel("Creator.xlsx")
-
-# Apply the parse_plan function to the "Plan" column and print the results
-for plan in df["Plan"]:
-    parsed_value = parse_plan_for_sets(plan)
-    print(f"Plan: {plan} -> Parsed Value: {parsed_value}")
+create_output_spreadsheet("Creator.xlsx", "Output.xlsx")
